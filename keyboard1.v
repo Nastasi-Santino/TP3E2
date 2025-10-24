@@ -6,22 +6,32 @@ module keyb_iface(
     output reg         is_number,
     output reg         is_op,
     output reg         is_eq,
+    output reg         btn_pressed,
     output wire        any_btn,      // ya sincronizado
     output reg  [3:0]  num_val,
     output reg  [1:0]  op_val
 );
+    reg first_col;
+    reg btn_press_internal;
 
     //==========================================================
     // 1) Barrido de columnas (ring counter)
     //==========================================================
+    //Ring counter para seleccionar columnas
     always @(posedge clk) begin
         if (reset) begin
-            cols <= 4'b0000;
-        end else begin
-            if (cols == 4'b0000)
+            cols <= 4'b0001;
+            first_col <= 1;
+        end
+        else begin
+            if (cols == 4'b1000) begin
                 cols <= 4'b0001;
-            else
+                first_col <= 1;
+            end
+            else begin
                 cols <= cols << 1;
+                first_col <= 0;
+            end
         end
     end
 
@@ -91,13 +101,33 @@ module keyb_iface(
                     cont <= cont + 1'b1;
 
                 if ((cont >= CUENTA) && !latched) begin
+                    btn_press_internal <= 1'b1; // tecla presionada
                     btn_store <= btn_id;   // captura una vez
                     latched   <= 1'b1;     // no re-disparar hasta soltar
+                end
+                else if (first_col) begin
+                btn_store <= 4'd0;
+                btn_press_internal <= 0;                
                 end
             end else begin 
                 cont      <= {CW{1'b0}};
                 latched   <= 1'b0;
                 btn_store <= 4'd0;         // o mantené último si preferís
+            end
+        end
+    end 
+
+    reg [3:0] btn_out;
+
+    always @(posedge clk) begin
+        if (first_col) begin
+            if (btn_press_internal) begin
+                btn_out <= btn_store;
+                btn_pressed <= 1;
+            end
+            else if (!btn_press_internal) begin
+                btn_out <= 4'd0;
+                btn_pressed <= 0;
             end
         end
     end
@@ -119,9 +149,9 @@ module keyb_iface(
     parameter [3:0] BTN_EQ =   4'b1111;    //0000 0000 0000 0001;
 
     //genero las salidas en base a los botones
-    always @(btn_store)
+    always @(btn_out)
     begin
-        case (btn_store)
+        case (btn_out)
             BTN_0: begin 
                 is_number <= 1;
                 is_eq <= 0;
@@ -158,7 +188,41 @@ module keyb_iface(
                 op_val = 2'd0;
             end
 
-            //.... etc.
+            BTN_5: begin 
+                is_number <= 1;
+                is_eq <= 0;
+                is_op <= 0;
+                num_val = 4'd5;
+                op_val = 2'd0;
+            end
+            BTN_6: begin 
+                is_number <= 1;
+                is_eq <= 0;
+                is_op <= 0;
+                num_val = 4'd6;
+                op_val = 2'd0;
+            end
+            BTN_7: begin 
+                is_number <= 1;
+                is_eq <= 0;
+                is_op <= 0;
+                num_val = 4'd7;
+                op_val = 2'd0;
+            end
+            BTN_8: begin 
+                is_number <= 1;
+                is_eq <= 0;
+                is_op <= 0;
+                num_val = 4'd8;
+                op_val = 2'd0;
+            end
+            BTN_9: begin 
+                is_number <= 1;
+                is_eq <= 0;
+                is_op <= 0;
+                num_val = 4'd9;
+                op_val = 2'd0;
+            end
 
             BTN_PLUS: begin 
                 is_number <= 0;

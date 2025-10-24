@@ -44,7 +44,7 @@ module keyb_controller(
     //guardo el valor que leo de fila y col
     always @(posedge clk) begin
         if (reset) begin
-            btn_store <= 8'd0;
+            btn_store <= 4'd0;
             btn_press_internal <= 0;
         end
         else begin
@@ -53,7 +53,7 @@ module keyb_controller(
                 btn_press_internal <= 1;
             end
             else if (first_col) begin
-                btn_store <= 8'd0;
+                btn_store <= 4'd0;
                 btn_press_internal <= 0;                
             end
         end
@@ -75,4 +75,3 @@ module keyb_controller(
 
 
 endmodule
- 

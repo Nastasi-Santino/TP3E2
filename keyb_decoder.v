@@ -1,10 +1,14 @@
 module keyb_decoder(
+        input wire clk,
+        input wire reset,
+        input wire btn_press_in,
         input wire [7:0] btn_id,
         output reg is_number,
         output reg is_op,
         output reg is_eq,
         output reg [3:0] num_val,
-        output reg [1:0] op_val 
+        output reg [1:0] op_val,
+        output reg btn_pressed   
 );
 
 
@@ -24,112 +28,122 @@ module keyb_decoder(
     parameter [7:0] BTN_EQ =   8'b00010001;    //0000 0000 0000 0001;
 
     //genero las salidas en base a los botones
-    always @(*) begin
-        case (btn_id)
-            BTN_0: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd0;
-                op_val <= 2'd0;
-            end
-            BTN_1: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd1;
-                op_val <= 2'd0;
-            end
-            BTN_2: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd2;
-                op_val <= 2'd0;
-            end
-            BTN_3: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd3;
-                op_val <= 2'd0;
-            end
-            BTN_4: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd4;
-                op_val <= 2'd0;
-            end
-            BTN_5: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd5;
-                op_val <= 2'd0;
-            end
-            BTN_6: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd6;
-                op_val <= 2'd0;
-            end
-            BTN_7: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd7;
-                op_val <= 2'd0;
-            end
-            BTN_8: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd8;
-                op_val <= 2'd0;
-            end
-            BTN_9: begin 
-                is_number <= 1;
-                is_eq <= 0;
-                is_op <= 0;
-                num_val <= 4'd9;
-                op_val <= 2'd0;
-            end
-                                                                
-            BTN_PLUS: begin 
-                is_number <= 0;
-                is_eq <= 0;
-                is_op <= 1;
-                num_val <= 4'd0;
-                op_val <= 2'd1;
-            end
-            BTN_MIN: begin 
-                is_number <= 0;
-                is_eq <= 0;
-                is_op <= 1;
-                num_val <= 4'd0;
-                op_val <= 2'd2;
-            end
+    always @(posedge clk) begin
+        if (reset) begin
+            btn_pressed <= 0;
+            is_number <= 0;
+            is_eq <= 0;
+            is_op <= 0;
+            num_val <= 4'd0;
+            op_val <= 2'd0;
+        end
+        else if (btn_press_in) begin
+            btn_pressed <= 1;
+            case (btn_id)
+                BTN_0: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd0;
+                    op_val = 2'd0;
+                end
+                BTN_1: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd1;
+                    op_val = 2'd0;
+                end
+                BTN_2: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd2;
+                    op_val = 2'd0;
+                end
+                BTN_3: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd3;
+                    op_val = 2'd0;
+                end
+                BTN_4: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd4;
+                    op_val = 2'd0;
+                end
+                BTN_5: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd5;
+                    op_val = 2'd0;
+                end
+                BTN_6: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd6;
+                    op_val = 2'd0;
+                end
+                BTN_7: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd7;
+                    op_val = 2'd0;
+                end
+                BTN_8: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd8;
+                    op_val = 2'd0;
+                end
+                BTN_9: begin 
+                    is_number <= 1;
+                    is_eq <= 0;
+                    is_op <= 0;
+                    num_val = 4'd9;
+                    op_val = 2'd0;
+                end
+                                                                    
+                BTN_PLUS: begin 
+                    is_number <= 0;
+                    is_eq <= 0;
+                    is_op <= 1;
+                    num_val <= 4'd0;
+                    op_val <= 2'd1;
+                end
+                BTN_MIN: begin 
+                    is_number <= 0;
+                    is_eq <= 0;
+                    is_op <= 1;
+                    num_val <= 4'd0;
+                    op_val <= 2'd2;
+                end
 
 
-            BTN_EQ: begin 
-                is_number <= 0;
-                is_eq <= 1;
-                is_op <= 0;
-                num_val <= 4'd0;
-                op_val <= 2'd0;
-            end
-
-            default: begin
+                BTN_EQ: begin 
+                    is_number <= 0;
+                    is_eq <= 1;
+                    is_op <= 0;
+                    num_val <= 4'd0;
+                    op_val <= 2'd0;
+                end
+            endcase
+        end
+            else begin 
+                btn_pressed <= 0;
                 is_number <= 0;
                 is_eq <= 0;
                 is_op <= 0;
                 num_val <= 4'd0;
                 op_val <= 2'd0;
-            end
-        endcase
-
+            end  
     end
 
 endmodule
