@@ -14,7 +14,7 @@ module fsm (
             salida <= 'd0;
             state <= 'd0;
         end else begin
-            case(state) begin
+            case(state) 
                 waitingNum1:
                     salida <= 'd0;
                     if(opRecived == 1'd1) begin
@@ -29,6 +29,7 @@ module fsm (
                     salida <= 'd2
                     if(opRecived == 1'd1) begin
                         state = 2'd1;
+                    end
             endcase
         end
     end
