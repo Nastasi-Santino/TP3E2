@@ -1,20 +1,14 @@
 module display_out(
     input wire clk,
-    input wire ext_clk,
+    input wire ser_clk,
     input wire reset,
     input wire enable,
     input wire [15:0] bcd_in,
     //input wire data_ready, 
     //output wire data_sent,
-    output wire ser_clk,
     output wire data_out,
     output wire sending_data,
-    output wire display_clk
 );
-
-// We could change this if needed
-assign ser_clk = ext_clk;
-assign display_clk = ext_clk;
 
 // Get the segments
 wire [31:0] segment_data;

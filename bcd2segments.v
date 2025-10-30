@@ -1,5 +1,5 @@
 module bcd2segments #(
-    parameter COMMON_ANODE = 1'b1  // 1: ánodo común (salidas activas en bajo), 0: cátodo común (activas en alto)
+    parameter COMMON_ANODE = 1'b0  // 1: ánodo común (salidas activas en bajo), 0: cátodo común (activas en alto)
 )(
     input  wire [3:0] bcd_in,
     output wire [7:0] segments     // {a, b, c, d, e, f, g, dp}
