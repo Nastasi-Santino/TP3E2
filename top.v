@@ -37,15 +37,19 @@ module top (
     wire [15:0]operator1BCD;
     wire [15:0]operator2BCD;
 
-    if(state == 'd0) begin
-        OpLogic(clk, rst, digitRead, numberPressed && bottonPressedPulse, numCounter, operator1Binary, operator1BCD);
-    end else if (state == 'd1) begin
-        OpLogic(clk, rst, digitRead, numberPressed && bottonPressedPulse, numCounter, operator2Binary, operator2BCD);
-    end
-
     wire dataEnable;
     wire data;
+
+    if(state == 'd0) begin
+        OpLogic(clk, rst, digitRead, numberPressed && bottonPressedPulse, numCounter, operator1Binary, operator1BCD);
+        display_out(clk, ser_clk, rst, 1'd1, operator1BCD, dataEnable, data);
+    end else if (state == 'd1) begin
+        OpLogic(clk, rst, digitRead, numberPressed && bottonPressedPulse, numCounter, operator2Binary, operator2BCD);
+        display_out(clk, ser_clk, rst, 1'd1, operator2BCD, dataEnable, data);
+    end
+
+
     
-    display_out(clk, ser_clk, rst, 1'd1, dataEnable, data);
+    
 
 endmodule
