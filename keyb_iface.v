@@ -162,8 +162,8 @@ module keyb_iface(
                 BTN_7: begin is_number<=1; is_eq<=0; is_op<=0; num_val<=4'd7; op_val<=2'd0; end
                 BTN_8: begin is_number<=1; is_eq<=0; is_op<=0; num_val<=4'd8; op_val<=2'd0; end
                 BTN_9: begin is_number<=1; is_eq<=0; is_op<=0; num_val<=4'd9; op_val<=2'd0; end
-                BTN_PLUS: begin is_number<=0; is_eq<=0; is_op<=1; num_val<=4'd0; op_val<=2'd1; end
-                BTN_MIN:  begin is_number<=0; is_eq<=0; is_op<=1; num_val<=4'd0; op_val<=2'd2; end
+                BTN_PLUS: begin is_number<=0; is_eq<=0; is_op<=1; num_val<=4'd0; op_val<=2'd0; end
+                BTN_MIN:  begin is_number<=0; is_eq<=0; is_op<=1; num_val<=4'd0; op_val<=2'd1; end
                 BTN_EQ:   begin is_number<=0; is_eq<=1; is_op<=0; num_val<=4'd0; op_val<=2'd0; end
                 default:  begin is_number<=0; is_eq<=0; is_op<=0; num_val<=4'd0; op_val<=2'd0; end
             endcase

@@ -4,7 +4,30 @@ module top (
     output reg [3:0]cols);
 
     SB_HFOSC  u_SB_HFOSC(.CLKHFPU(1), .CLKHFEN(1), .CLKHF(clk));
-    SB_LFOSC u_SB_LFOSC(.CLKLFPU(1), :CLKLFEN(1), .CLKLF(ser_clk));
+
+    parameter CUENTA = 2000;
+
+    reg ser_clk;
+    reg[] serialCount;
+    reg prev_ser_clk;
+    wire risingEdgeSerClk;
+
+    always(@posedge clk) begin
+        if(rst == 'd1) begin
+            serialCount <= 'd0;
+            ser_clk <= 'd0;
+        end else begin
+            serialCount <= serialCount + 'd1;
+            prev_ser_clk <= ser_clk;
+            if (serialCount >= CUENTA) begin
+                serialCount <= 'd0;
+                ser_clk <= ~ser_clk;
+            end
+        end
+    end
+
+    assign risingEdgeSerClk = ser_clk && (~prev_ser_clk);
+
 
     wire numberPressed;
     wire operationPressed;
@@ -12,7 +35,7 @@ module top (
     wire bottonPressedPulse;
     wire bottonPressedNow;
     wire digitRead;
-    wire operationRead;
+    wire [1:0]operationRead;
     reg[1:0] numCounter;
 
     always @(posedge clk) begin
@@ -42,13 +65,15 @@ module top (
 
     if(state == 'd0) begin
         OpLogic(clk, rst, digitRead, numberPressed && bottonPressedPulse, numCounter, operator1Binary, operator1BCD);
-        display_out(clk, ser_clk, rst, 1'd1, operator1BCD, dataEnable, data);
+        display_out(clk, rst, risingEdgeSerClk, operator1BCD, dataEnable, data);
     end else if (state == 'd1) begin
         OpLogic(clk, rst, digitRead, numberPressed && bottonPressedPulse, numCounter, operator2Binary, operator2BCD);
-        display_out(clk, ser_clk, rst, 1'd1, operator2BCD, dataEnable, data);
+        display_out(clk, rst, risingEdgeSerClk, operator2BCD, dataEnable, data);
     end
 
+    reg [13:0]resultBinary;
 
+    ALU(clk, rst, operationRead, operationPressed, equalsPressed, operator1Binary, operator2Binary, resultBinary);
     
     
 
