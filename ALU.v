@@ -18,7 +18,7 @@ always @(posedge clk) begin
     if(rst) begin
         result <= 'd0;    
     end else begin
-        if(opEnable) begin
+        if(opEnable == 'd1) begin
             case(operationVal)
                 add: result <= operator1 + operator2;
                 sub: result <= operator1 - operator2;

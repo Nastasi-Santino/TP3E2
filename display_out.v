@@ -6,7 +6,7 @@ module display_out(
     //input wire data_ready, 
     //output wire data_sent,
     output wire data_out,
-    output wire sending_data,
+    output wire sending_data
 );
 
 // Get the segments
