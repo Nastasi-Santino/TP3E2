@@ -3,7 +3,8 @@ module fsm (
     input rst,
     input opRecived,
     input eqRecived,
-    output reg [1:0] salida);
+    output reg [1:0] salida
+    output reg newOperation);
     localparam waitingNum1 = 2'd0
     localparam waitingNum2 = 2'd1
     localparam showingResult = 2'd2
@@ -23,12 +24,13 @@ module fsm (
                 waitingNum2:
                     salida <= 'd1;
                     if(eqRecived == 1'd1) begin
-                        state = 2'd2;
+                        state <= 2'd2;
                 end
                 showingResult:
                     salida <= 'd2
                     if(opRecived == 1'd1) begin
-                        state = 2'd1;
+                        newOperation <= 'd1;
+                        state <= 2'd1;
                     end
             endcase
         end

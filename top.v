@@ -15,6 +15,7 @@ module top (
     always(@posedge clk) begin
         if(rst == 'd1) begin
             serialCount <= 'd0;
+            prev_ser_clk <= 'd0;
             ser_clk <= 'd0;
         end else begin
             serialCount <= serialCount + 'd1;
@@ -52,13 +53,35 @@ module top (
              bottonPressedNow, digitRead, operationRead);
 
     wire[1:0] state;
+    reg = newOperation;
 
-    fsm(clk, rst, bottonPressedPulse && operationPressed, bottonPressedPulse && equalsPressed, state);
+    fsm(clk, rst, bottonPressedPulse && operationPressed, bottonPressedPulse && equalsPressed, state, newOperation);
 
-    wire [13:0]operator1Binary;
+    reg [13:0]operator1Binary;
     wire [13:0]operator2Binary;
-    wire [15:0]operator1BCD;
+    reg [15:0]operator1BCD;
     wire [15:0]operator2BCD;
+    wire [13:0]resultBinary;
+    wire [15:0]resultBCD;
+    
+
+    ALU(clk, rst, operationRead, operationPressed, equalsPressed, operator1Binary, operator2Binary, resultBinary);
+
+    binary_to_bcd(resultBinary, resultBCD[0:3], resultBCD[4:7], resultBCD[8:11], resultBCD[12:15]);
+
+    always @(posedge clk) begin
+        if(rst == 'd1) begin
+            newOperation <= 'd0;
+            operator1Binary <= 'd0;
+            operator1BCD <= 'd0;
+        end else begin   
+            if(newOperation == 'd1) begin
+                operator1Binary <= resultBinary;
+                operator1BCD <= resultBCD;
+                newOperation <= 'd0;
+            end
+        end
+    end
 
     wire dataEnable;
     wire data;
@@ -69,11 +92,13 @@ module top (
     end else if (state == 'd1) begin
         OpLogic(clk, rst, digitRead, numberPressed && bottonPressedPulse, numCounter, operator2Binary, operator2BCD);
         display_out(clk, rst, risingEdgeSerClk, operator2BCD, dataEnable, data);
+    end else if (state == 'd2) begin
+        display_out(clk, rst, risingEdgeSerClk, reusltBCD, dataEnable, data);
     end
 
-    reg [13:0]resultBinary;
 
-    ALU(clk, rst, operationRead, operationPressed, equalsPressed, operator1Binary, operator2Binary, resultBinary);
+
+    
     
     
 

@@ -1,54 +1,46 @@
-module binary_to_bcd #( // Ancho de la entrada binaria
-    input  wire                  clk,
-    input  wire [13:0]  binary_in,
-    output reg  [3:0]            bcd_hundreds,
-    output reg  [3:0]            bcd_tens,
-    output reg  [3:0]            bcd_units
+// Conversión binario -> BCD usando "double dabble" (shift-add-3)
+// - Parametrizable en ancho binario y cantidad de dígitos BCD.
+// - Versión combinacional (sin clk). Si querés registrar salidas, ver nota al final.
+
+module binary_to_bcd #(
+    parameter integer BIN_WIDTH = 14,  // ancho de binary_in (por defecto 14 bits)
+    parameter integer DIGITS    = 4    // número de dígitos BCD a generar (4 => miles..unidades)
+)(
+    input  wire [BIN_WIDTH-1:0] binary_in,
+    output reg  [3:0]           bcd_thousands,
+    output reg  [3:0]           bcd_hundreds,
+    output reg  [3:0]           bcd_tens,
+    output reg  [3:0]           bcd_units
 );
+    // Ancho del shifter: BIN + 4*DIGITS (los 4*DIGITS más altos guardan los BCD)
+    localparam integer SHIFT_WIDTH = BIN_WIDTH + 4*DIGITS;
 
-    // Registro interno para el proceso de conversión.
-    // Necesitamos 3 dígitos BCD (12 bits) y el binario original (8 bits).
-    // Tamaño total: 12 (BCD) + 8 (BIN) = 20 bits.
-    reg [BIN_WIDTH + 11:0] bcd_shifter;
+    // Registro interno de corrimiento
+    reg [SHIFT_WIDTH-1:0] shifter;
 
-    integer i;
+    integer i; // recorre los bits binarios
+    integer d; // recorre los dígitos BCD
 
-    // Lógica combinacional para la conversión
     always @* begin
-        // 1. Inicialización: Colocar el binario en la parte baja del registro.
-        bcd_shifter = {20'b0, binary_in}; // Limpiamos la parte BCD y cargamos el binario.
+        // 1) Inicialización: BCD en cero (parte alta) y el binario en la parte baja
+        shifter = { {4*DIGITS{1'b0}}, binary_in };
 
-        // 2. Algoritmo "Double Dabble": Iterar por cada bit de la entrada binaria.
+        // 2) Double Dabble: por cada bit del binario
         for (i = 0; i < BIN_WIDTH; i = i + 1) begin
-
-            // 2a. Comprobar cada dígito BCD (unidades, decenas, centenas) antes de desplazar.
-            // Si algún dígito es mayor que 4 (0100), se le suma 3.
-            // La comprobación se hace en los bits que corresponderán a los BCD tras el desplazamiento.
-            
-            // Comprobar dígito de unidades (bits 11:8 del shifter)
-            if (bcd_shifter[11:8] > 4) begin
-                bcd_shifter[11:8] = bcd_shifter[11:8] + 3;
+            // 2a) Para cada dígito BCD: si > 4, sumar 3
+            for (d = 0; d < DIGITS; d = d + 1) begin
+                if (shifter[BIN_WIDTH + 4*d +: 4] > 4)
+                    shifter[BIN_WIDTH + 4*d +: 4] = shifter[BIN_WIDTH + 4*d +: 4] + 3;
             end
-
-            // Comprobar dígito de decenas (bits 15:12 del shifter)
-            if (bcd_shifter[15:12] > 4) begin
-                bcd_shifter[15:12] = bcd_shifter[15:12] + 3;
-            end
-
-            // Comprobar dígito de centenas (bits 19:16 del shifter)
-            if (bcd_shifter[19:16] > 4) begin
-                bcd_shifter[19:16] = bcd_shifter[19:16] + 3;
-            end
-
-            // 2b. Desplazar todo el registro un bit a la izquierda.
-            bcd_shifter = bcd_shifter << 1;
+            // 2b) Desplazar todo 1 bit a la izquierda
+            shifter = shifter << 1;
         end
 
-        // 3. Asignar los resultados a las salidas.
-        // Los dígitos BCD quedan en la parte alta del registro.
-        bcd_hundreds = bcd_shifter[19:16];
-        bcd_tens     = bcd_shifter[15:12];
-        bcd_units    = bcd_shifter[11:8];
+        // 3) Extraer los dígitos BCD (orden: unidades, decenas, centenas, miles)
+        bcd_units     = shifter[BIN_WIDTH +  0 +: 4];
+        bcd_tens      = shifter[BIN_WIDTH +  4 +: 4];
+        bcd_hundreds  = shifter[BIN_WIDTH +  8 +: 4];
+        bcd_thousands = shifter[BIN_WIDTH + 12 +: 4];
     end
 
 endmodule
