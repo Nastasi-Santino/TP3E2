@@ -15,21 +15,31 @@ module keyb_iface(
     // 1) Barrido de columnas (ring counter)
     //==========================================================
     reg first_col;
-    always @(posedge clk) begin
-        if (reset) begin
-            cols      <= 4'b0001;
-            first_col <= 1'b1;
-        end else begin
-            if (cols == 4'b1000) begin
-                cols      <= 4'b0001;
-                first_col <= 1'b1;
-            end else begin
-                cols      <= cols << 1;
-                first_col <= 1'b0;
+    reg [9:0] frecDivider;
+
+always @(posedge clk) begin
+    if (reset) begin
+        cols        <= 4'b0001;
+        first_col   <= 1'b1;
+        frecDivider <= 10'd0;
+    end else begin
+        if (frecDivider == 10'd1023) begin   // cada 1024 ciclos
+            frecDivider <= 10'd0;
+
+            if (any_btn == 1'b0) begin       // solo si no hay tecla
+                if (cols == 4'b1000) begin
+                    cols      <= 4'b0001;
+                    first_col <= 1'b1;
+                end else begin
+                    cols      <= cols << 1;
+                    first_col <= 1'b0;
+                end
             end
+        end else begin
+            frecDivider <= frecDivider + 10'd1;
         end
     end
-
+end
     //==========================================================
     // 2) Sincronización de filas (anti-metaestabilidad)
     //==========================================================
@@ -76,42 +86,39 @@ module keyb_iface(
     //==========================================================
     // 4) Debounce robusto + captura y pulso btn_pressed (1 clk)
     //==========================================================
-    localparam integer CUENTA = 50000;                // ~1 ms @ 50 MHz (ajustá)
-    localparam integer CW     = $clog2(CUENTA + 1);
+    localparam integer CUENTA = 30000;                // ~1 ms @ 50 MHz (ajustá)
 
-    reg [CW-1:0] cont;
+    reg [15:0] cont;
     reg          latched;      // ya se validó una tecla y se "bloquea" hasta soltar
     reg [3:0]    btn_store;    // tecla estable tras debounce
 
     always @(posedge clk) begin
         if (reset) begin
-            cont        <= {CW{1'b0}};
+            cont        <= 'd0;         
             latched     <= 1'b0;
             btn_store   <= 4'd0;
             btn_pressed <= 1'b0;
         end else begin
-            // default: pulso de un ciclo
-            btn_pressed <= 1'b0;
 
-            if (any_btn) begin
+            if (any_btn == 'd1) begin
                 // acumula hasta superar el umbral
-                if (cont < CUENTA)
+                if (cont < CUENTA) 
                     cont <= cont + 1'b1;
+                    btn_pressed <= 1'b0;
 
                 // dispara una sola vez cuando supera umbral y no estaba "latched"
                 if ((cont >= CUENTA) && !latched) begin
                     btn_store   <= btn_id;   // captura la tecla válida
                     latched     <= 1'b1;     // no re-disparar hasta soltar
                     btn_pressed <= 1'b1;     // **pulso 1 clk** al validar
+                end else begin
+                    btn_pressed <= 1'b0;
                 end
 
-                // opción adicional: al "cierre de vuelta" considerá consumido
-                if (first_col) begin
-                    // no hace falta nada extra aquí, el pulso ya fue de 1 clk
-                end
+                
             end else begin
                 // al soltar: limpiar para permitir próxima detección
-                cont      <= {CW{1'b0}};
+                cont      <= 'd0;
                 latched   <= 1'b0;
                 btn_store <= 4'd0;
             end

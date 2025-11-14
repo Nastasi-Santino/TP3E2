@@ -16,25 +16,55 @@ module top (
     wire [3:0]rows;
     wire [3:0]cols;
 
-    assign rst = gpio_2;
     assign rows[0] = gpio_28;
     assign rows[1] = gpio_38;
     assign rows[2] = gpio_42;
     assign rows[3] = gpio_36;
-    assign cols[0] = gpio_43;
-    assign cols[1] = gpio_34;
-    assign cols[2] = gpio_37;
-    assign cols[3] = gpio_31;
 
-    SB_HFOSC  u_SB_HFOSC(.CLKHFPU(1'd1), .CLKHFEN(1'd1), .CLKHF(clk));
+    assign gpio_43 = cols[0];
+    assign gpio_34 = cols[1];
+    assign gpio_37 = cols[2];
+    assign gpio_31 = cols[3];
 
-    parameter CUENTA = 60000;
+    SB_HFOSC #(
+        .CLKHF_DIV("0b11")    // 0b00: 48 MHz
+                            // 0b01: 24 MHz
+                            // 0b10: 12 MHz
+                            // 0b11:  6 MHz
+    ) u_SB_HFOSC (
+        .CLKHFPU(1'b1),       // power-up
+        .CLKHFEN(1'b1),       // enable
+        .CLKHF(clk)           // clock de salida
+    );
 
-    reg ser_clk;
+// --------------------------------------------------
+// Power-On Reset (POR) para iCE40
+// Mantiene rst = 1 durante ~16 ciclos de clk
+// --------------------------------------------------
+    reg [3:0] por_counter = 0;
+    reg       rst_reg = 1'b1;
+
+    always @(posedge clk) begin
+        if (por_counter != 4'hF) begin
+            por_counter <= por_counter + 1'b1;
+            rst_reg <= 1'b1;
+        end else begin
+            rst_reg <= 1'b0;
+        end
+    end
+
+    assign rst = rst_reg | gpio_2;      // botón activo alto
+
+
+    parameter CUENTA = 300;
+
+
     assign gpio_46 = ser_clk;
-    reg[15:0] serialCount;
-    reg prev_ser_clk;
     wire risingEdgeSerClk;
+
+    reg ser_clk = 1'b0;
+    reg [15:0] serialCount = 16'd0;
+    reg prev_ser_clk = 1'b0;
 
     always@(posedge clk) begin
         if(rst == 'd1) begin
@@ -117,7 +147,7 @@ module top (
                     newOperation, resultBinary, resultBCD, operator1Binary, operator1BCD);
     OpLogic OpLogic2(clk, rst, digitRead, numberPressed && bottonPressedPulse  && (state == 'd1), numCounter,
                     1'd0, 14'd0, 16'd0, operator2Binary, operator2BCD);
-    display_out display_out1(clk, rst, risingEdgeSerClk, actualDisplayBCD, dataEnable, data);
+    display_out display_out1(clk, rst, risingEdgeSerClk, actualDisplayBCD, data, dataEnable);
 
     
 endmodule

@@ -6,7 +6,7 @@ module display_out(
     //input wire data_ready, 
     //output wire data_sent,
     output wire data_out,
-    output wire sending_data
+    output reg sending_data
 );
 
 // Get the segments
@@ -18,7 +18,7 @@ bcd2segments deco2 (bcd_in[11:8], segment_data[23:16]);
 bcd2segments deco3 (bcd_in[15:12], segment_data[31:24]);
 
 // Wait time (in periods of ser_clk) between serial data send (must be >32 to allow to send all bits!)
-parameter [31:0] send_interval = 31'd160;
+parameter [31:0] send_interval = 31'd1600;
 reg [31:0] interval_counter;
 reg data_out_reg;
 reg [31:0] segment_data_out;
@@ -46,7 +46,14 @@ always @(posedge clk) begin
     end
 end
 
-assign sending_data = (interval_counter <= 32) && (interval_counter >= 1);
+always @(negedge clk) begin
+    if((interval_counter <= 32) && (interval_counter >= 1)) begin
+        sending_data <= 1;
+    end else   
+        sending_data <= 0;
+    
+end
+// assign sending_data <= (interval_counter <= 32) && (interval_counter >= 1);
 assign data_out = data_out_reg;
 
 endmodule
