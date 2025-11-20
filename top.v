@@ -26,6 +26,8 @@ module top (
     assign gpio_37 = cols[2];
     assign gpio_31 = cols[3];
 
+    wire clk;
+
     SB_HFOSC #(
         .CLKHF_DIV("0b11")    // 0b00: 48 MHz
                             // 0b01: 24 MHz
@@ -106,6 +108,17 @@ module top (
              numberPressed, operationPressed, equalsPressed, bottonPressedPulse, 
              bottonPressedNow, digitRead, operationRead);
 
+    reg [1:0]savedOpVal;
+
+    always @(posedge clk) begin
+        if(rst == 'd1) begin
+            savedOpVal <= 'd0;
+        end else
+        if(operationPressed == 'd1) begin
+            savedOpVal <= operationRead;
+        end 
+    end
+
     wire[1:0] state;
     wire newOperation;
 
@@ -119,9 +132,14 @@ module top (
     wire [15:0]resultBCD;
     
 
-    ALU ALU1(clk, rst, operationRead, operationPressed, equalsPressed, operator1Binary, operator2Binary, resultBinary);
+    ALU ALU1(clk, rst, savedOpVal, equalsPressed, operator1Binary, operator2Binary, resultBinary);
 
-    binary_to_bcd binary_to_bcd1(resultBinary, resultBCD[3:0], resultBCD[7:4], resultBCD[11:8], resultBCD[15:12]);
+    binary_to_bcd binary_to_bcd1(
+        resultBinary, 
+        resultBCD[15:12], 
+        resultBCD[11:8], 
+        resultBCD[7:4], 
+        resultBCD[3:0]);
 
     wire dataEnable;
     wire data;
@@ -133,9 +151,11 @@ module top (
     reg[15:0] actualDisplayBCD;
 
     always @(posedge(clk))begin
+        if(rst == 'd1) begin
+            actualDisplayBCD <= 'd0;
+        end 
         if(state == 'd0) begin
             actualDisplayBCD <= operator1BCD;
-            
         end else if (state == 'd1) begin
             actualDisplayBCD <= operator2BCD;
         end else if (state == 'd2) begin
@@ -143,11 +163,54 @@ module top (
         end
     end
 
+reg active;
+reg done;
+reg[5:0] count;
+
+reg preload;
+
+always @(posedge clk) begin
+    if (rst) begin
+        active <= 1'b0;
+        done   <= 1'b0;
+        count  <= 6'd0;
+        preload <= 1'b0;
+    end else begin
+        // Por defecto no cambiamos done, salvo que terminemos de contar
+        // (si querés que done sea solo un pulso, podés forzarlo a 0 aquí)
+        // done <= 1'b0; // descomentar si querés done pulsado un solo ciclo
+
+        // Arrancar conteo con el pulso de start
+        if (bottonPressedPulse) begin
+            preload <= 1'b1;
+        end
+        else if (preload)
+        begin
+            active <= 1'b1;   // habilita conteo
+            done   <= 1'b0;   // limpiás bandera de fin
+            count  <= 6'd0;   // arrancás en 0
+            preload <= 1'b0;
+        end else if (active) begin
+            // Solo contamos cuando llega un flanco del serclk detectado
+            if (risingEdgeSerClk) begin
+                if (count >= 6'd39) begin
+                    // Llegamos a 40 pulsos (0..39)
+                    active <= 1'b0;   // dejo de contar
+                    done   <= 1'b1;   // marco que terminé
+                    // count se puede dejar en 39 o poner en 40, como prefieras
+                end else begin
+                    count <= count + 6'd1;
+                end
+            end
+        end
+    end
+end
+
     OpLogic OpLogic1(clk, rst, digitRead, numberPressed && bottonPressedPulse && (state == 'd0), numCounter,
                     newOperation, resultBinary, resultBCD, operator1Binary, operator1BCD);
     OpLogic OpLogic2(clk, rst, digitRead, numberPressed && bottonPressedPulse  && (state == 'd1), numCounter,
-                    1'd0, 14'd0, 16'd0, operator2Binary, operator2BCD);
-    display_out display_out1(clk, rst, risingEdgeSerClk, actualDisplayBCD, data, dataEnable);
+                    newOperation, 14'd0, 16'd0, operator2Binary, operator2BCD);
+    display_out display_out1(clk, rst, (risingEdgeSerClk && (count != 0)) || rst, actualDisplayBCD, data, dataEnable);
 
     
 endmodule

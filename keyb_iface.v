@@ -6,7 +6,7 @@ module keyb_iface(
     output reg         is_number,
     output reg         is_op,
     output reg         is_eq,
-    output reg         btn_pressed,  // pulso 1 clk cuando se valida
+    output reg         btn_pressed_out,  // pulso 1 clk cuando se valida
     output wire        any_btn,      // nivel: hay alguna fila activa (sincronizada)
     output reg  [3:0]  num_val,
     output reg  [1:0]  op_val
@@ -15,6 +15,7 @@ module keyb_iface(
     // 1) Barrido de columnas (ring counter)
     //==========================================================
     reg first_col;
+    reg btn_pressed;
     reg [9:0] frecDivider;
 
 always @(posedge clk) begin
@@ -141,6 +142,8 @@ end
     localparam [3:0] BTN_9    = 4'b1010;
     localparam [3:0] BTN_PLUS = 4'b1100;
     localparam [3:0] BTN_MIN  = 4'b1101;
+    localparam [3:0] BTN_MUL  = 4'b0011; 
+    localparam [3:0] BTN_DIV  = 4'b1011;
     localparam [3:0] BTN_EQ   = 4'b1111;
 
     // Registro del botón “salida” (opcional, útil para debug)
@@ -154,7 +157,12 @@ end
             is_eq     <= 1'b0;
             num_val   <= 4'd0;
             op_val    <= 2'd0;
-        end else if (btn_pressed) begin
+            btn_pressed_out <= 'd0;
+        end else
+        begin
+          btn_pressed_out <= btn_pressed;
+
+          if (btn_pressed) begin
             // actualizar solo cuando hay un nuevo valor validado
             btn_out <= btn_store;
 
@@ -171,10 +179,13 @@ end
                 BTN_9: begin is_number<=1; is_eq<=0; is_op<=0; num_val<=4'd9; op_val<=2'd0; end
                 BTN_PLUS: begin is_number<=0; is_eq<=0; is_op<=1; num_val<=4'd0; op_val<=2'd0; end
                 BTN_MIN:  begin is_number<=0; is_eq<=0; is_op<=1; num_val<=4'd0; op_val<=2'd1; end
+                BTN_MUL:  begin is_number<=0; is_eq<=0; is_op<=1; num_val<=4'd0; op_val<=2'd2; end
+                //BTN_DIV:  begin is_number<=0; is_eq<=0; is_op<=1; num_val<=4'd0; op_val<=2'd3; end
                 BTN_EQ:   begin is_number<=0; is_eq<=1; is_op<=0; num_val<=4'd0; op_val<=2'd0; end
                 default:  begin is_number<=0; is_eq<=0; is_op<=0; num_val<=4'd0; op_val<=2'd0; end
             endcase
         end
+      end
         // Si NO hay nuevo pulso, se conservan los últimos valores.
     end
 

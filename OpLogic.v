@@ -23,16 +23,18 @@ always @(posedge clk) begin
     end else begin
         if(newNumber) begin
             opBinary <= opBinary * 10 + digits;
-            case (digitnumber)
-                firstDigit:
-                    opBCD[3:0] = digits;
-                secondDigit:
-                    opBCD[7:4] = digits;
-                thirdDigit:
-                    opBCD[11:8] = digits;
-                fourthDigit:
-                    opBCD[15:12] = digits;
-            endcase
+            opBCD <= opBCD << 4;
+            opBCD[3:0] <= digits;
+            // case (digitnumber)
+            //     firstDigit:
+            //         opBCD[15:12] = digits;
+            //     secondDigit:
+            //         opBCD[11:8] = digits;
+            //     thirdDigit:
+            //         opBCD[7:4] = digits;
+            //     fourthDigit:
+            //         opBCD[3:0] = digits;
+            // endcase
         end else if(newOperation) begin
             opBCD <= prevResultBCD;
             opBinary <= prevResultBinary;
